@@ -89,7 +89,7 @@ class Client:
 		"""Play button handler."""
 		if self.state == self.READY:
 			threading.Thread(target=self.listenRtp).start()
-			self.playEvent = threading.Event
+			self.playEvent = threading.Event()
 			self.playEvent.clear()
 			self.sendRtspRequest(self.PLAY)
 	#TODO
@@ -214,6 +214,8 @@ class Client:
 			
 			if self.sessionId == session:
 				if int(lines[0].split(b' ')[1]) == 200:
+					msg = 'RTSP/1.0 200 OK\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId) + '\n'
+					print(msg)
 					if self.requestSent == self.SETUP:
 						self.state = self.READY
 						self.openRtpPort()

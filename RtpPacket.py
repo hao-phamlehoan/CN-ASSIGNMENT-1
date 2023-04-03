@@ -36,18 +36,30 @@ class RtpPacket:
 		header[2] |= (seqnum >> 8) & 0xFF
 		header[3] |= (seqnum) & 0xFF
 
-		header[4] |= (timestamp >> 24) & 0xFFFFFFFF
-		header[5] |= (timestamp >> 16) & 0x00FFFFFF
-		header[6] |= (timestamp >>  8) & 0x0000FFFF
-		header[7] |= (timestamp      ) & 0x000000FF
+		header[4] |= (timestamp >> 24) & 0xFF
+		header[5] |= (timestamp >> 16) & 0xFF
+		header[6] |= (timestamp >> 8) & 0xFF
+		header[7] |= (timestamp     ) & 0xFF
 
-		header[8]  |= (ssrc >> 24) & 0xFFFFFFFF
-		header[9]  |= (ssrc >> 16) & 0x00FFFFFF
-		header[10] |= (ssrc >>  8) & 0x0000FFFF
-		header[11] |= (ssrc      ) & 0x000000FF
+		# header[4] |= (timestamp & 0xFFFFFFFF) >> (32 - 8 * 1)
+		# header[5] |= (timestamp & 0x00FFFFFF) >> (32 - 8 * 2)
+		# header[6] |= (timestamp & 0x0000FFFF) >> (32 - 8 * 3)
+		# header[7] |= (timestamp & 0x000000FF) >> (32 - 8 * 4)
+
+		header[8]  |= (ssrc >> 24) & 0xFF
+		header[9]  |= (ssrc >> 16) & 0xFF
+		header[10] |= (ssrc >>  8) & 0xFF
+		header[11] |= (ssrc      ) & 0xFF
+
+		# header[8]  |= (ssrc & 0xFFFFFFFF) >> (32 - 8 * 1)
+		# header[9]  |= (ssrc & 0x00FFFFFF) >> (32 - 8 * 2)
+		# header[10] |= (ssrc & 0x0000FFFF) >> (32 - 8 * 3)
+		# header[11] |= (ssrc & 0x000000FF) >> (32 - 8 * 4)
 
 		self.header = header
 
+		# Get the payload from the argument
+		# self.payload = ...
 		self.payload = payload
 		
 	def decode(self, byteStream):
