@@ -8,7 +8,7 @@ class Server:
 		try:
 			SERVER_PORT = int(sys.argv[1])
 		except:
-			print("[Usage: Server.py Server_port]\n")
+			print ("[Usage: Server.py Server_port]\n")
 		rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		rtspSocket.bind(('', SERVER_PORT))
 		rtspSocket.listen(5)        
@@ -21,5 +21,4 @@ class Server:
 
 if __name__ == "__main__":
 	(Server()).main()
-
 
