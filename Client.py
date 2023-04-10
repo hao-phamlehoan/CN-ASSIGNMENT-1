@@ -1,12 +1,14 @@
 from tkinter import *
 import tkinter.messagebox
 tkinter.messagebox
+import time
 from tkinter import messagebox 
 tkinter.messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
-
 from RtpPacket import RtpPacket
+
+from tkinter import messagebox, PhotoImage
 
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
@@ -32,7 +34,7 @@ class Client:
 	
 	
 	
-	# Initiation..
+	# Khởi tạo đối tượng
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
 		self.master = master
 		self.master.protocol("WM_DELETE_WINDOW", self.handler)
@@ -41,59 +43,76 @@ class Client:
 		self.serverPort = int(serverport)
 		self.rtpPort = int(rtpport)
 		self.fileName = filename
+		self.master.geometry("400x360")
 		self.rtspSeq = 0
 		self.sessionId = 0
 		self.requestSent = -1
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
-		
+  		
+
+	####################################################
+	#Hàm này dùng để tạo giao diện bao gồm các nút
 	def createWidgets(self):
 		"""Build GUI."""
-		# Create Setup button
-		self.setup = Button(self.master, width=20, padx=3, pady=3)
+		# Tạo cái nút setup
+		self.master.rowconfigure(2, weight=1)
+		self.master.columnconfigure(0, weight=25)
+		self.master.columnconfigure(1, weight=25)
+		self.master.columnconfigure(2, weight=25)
+		self.master.columnconfigure(3, weight=25)
+
+		self.setup = Button(self.master, width=20, padx=10, pady=10, bg='gray', fg='white')
 		self.setup["text"] = "Setup"
 		self.setup["command"] = self.setupMovie
-		self.setup.grid(row=1, column=0, padx=2, pady=2)
+		self.setup.grid(row=1, column=0, padx=5, pady=5, sticky="SE")
 		
-		# Create Play button		
-		self.start = Button(self.master, width=20, padx=3, pady=3)
+		# Tạo cái nút play	
+		self.start = Button(self.master, width=20, padx=10, pady=10, bg='green', fg='white')
 		self.start["text"] = "Play"
 		self.start["command"] = self.playMovie
-		self.start.grid(row=1, column=1, padx=2, pady=2)
+		self.start.grid(row=1, column=1, padx=5, pady=5, sticky="S")
 		
-		# Create Pause button			
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		# Tạo cái nút Pause ấy		
+		self.pause = Button(self.master, width=20, padx=10, pady=10, bg='blue', fg='white')
 		self.pause["text"] = "Pause"
 		self.pause["command"] = self.pauseMovie
-		self.pause.grid(row=1, column=2, padx=2, pady=2)
-		
-		# Create Teardown button
-		self.teardown = Button(self.master, width=20, padx=3, pady=3)
+		self.pause.grid(row=1, column=2, padx=5, pady=5, sticky="S")
+		# Tạo cái nút teardown
+		self.teardown = Button(self.master, width=20, padx=10, pady=10, bg='red', fg='white')
 		self.teardown["text"] = "Teardown"
 		self.teardown["command"] =  self.exitClient
-		self.teardown.grid(row=1, column=3, padx=2, pady=2)
+		self.teardown.grid(row=1, column=3, padx=5, pady=5, sticky="S")
 		
-		# Create a label to display the movie
+		# Tạo 1 nhãn để hiển thị video
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
-	
+		self.label.grid(row=0, column=0, columnspan=4, sticky=S, padx=5, pady=5) 
+
+	##################################################
+	# Khi nhấn setup thì sẽ gửi 1 yêu cầu RTSP tới server
 	def setupMovie(self):
 		"""Setup button handler."""
 		if self.state == self.INIT:
 			self.sendRtspRequest(self.SETUP)
-	
+	##################################################
+	# Khi ấn nút teardown thì sẽ gửi 1 yêu cầu RTSP tới server để ngừng phát video + đóng kết nối RTSP && RTP
 	def exitClient(self):
 		"""Teardown button handler."""
 		self.sendRtspRequest(self.TEARDOWN)		
 		self.master.destroy() # Close the gui window
-		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) # Delete the cache image from video
+	# Dòng này để đóng ứng dụng và xoá cache đã lưu
+		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT) 
 
+	##################################################
+	# Khi nhấn pause thì hàm này sẽ gửi 1 RTSP tới server
 	def pauseMovie(self):
 		"""Pause button handler."""
 		if self.state == self.PLAYING:
 			self.sendRtspRequest(self.PAUSE)
 	
+	##################################################
+	#Khi ấn play thì sẽ gửi 1 RTSP tới server, đồng thời tạo 1 luồng mới để nghe các gói RTP gửi tới
 	def playMovie(self):
 		"""Play button handler."""
 		if self.state == self.READY:
@@ -103,33 +122,44 @@ class Client:
 			self.playEvent.clear()
 			self.sendRtspRequest(self.PLAY)
 	
+ 	##################################################
+	# Hàm này dùng để lắng nghe các gói RTP gửi tới, đồng thời cập nhật video vào giao diện ng dùng
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
+		totalReceived = 0
+		totalLost = 0
 		while True:
 			try:
 				print("LISTENING...")
-				data = self.rtpSocket.recv(20480)
+				data = self.rtpSocket.recv(20480) # nhận dữ liêụ gói tin RTP = recv
 				if data:
-					rtpPacket = RtpPacket()	
-					rtpPacket.decode(data)
+					rtpPacket = RtpPacket()	# trích xuất các trường thông tin
+					rtpPacket.decode(data) # lấy dữ liệu
 					
-					currFrameNbr = rtpPacket.seqNum()
+					currFrameNbr = rtpPacket.seqNum() # lấy stt khung hình 
 					print ("CURRENT SEQUENCE NUM: " + str(currFrameNbr))
 										
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
 						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
+						totalReceived += 1
+					else:
+						totalLost += 1
+
 			except:
-				# Stop listening upon requesting PAUSE or TEARDOWN
+				# Vòng lặp dừng khi gặp Pause || Teardown
 				if self.playEvent.isSet(): 
 					break
 				
-				# Upon receiving ACK for TEARDOWN request,
-				# close the RTP socket
+				# Nhận đc ACK cho yêu cầu dừng phát video
 				if self.teardownAcked == 1:
 					self.rtpSocket.shutdown(socket.SHUT_RDWR)
 					self.rtpSocket.close()
 					break
+		print("Tổng số hình ảnh đã nhận: ", totalReceived)
+		print ("Số hình ảnh bị rơi rớt: ", totalLost )
+		packetLossRate = (totalLost / (totalReceived + totalLost)) * 100
+		print("Tỉ lệ % rơi rớt hình ảnh là: " + str(packetLossRate) + "%")
 					
 	def writeFrame(self, data):
 		"""Write the received frame to a temp image file. Return the image file."""
@@ -139,13 +169,13 @@ class Client:
 		file.close()
 		
 		return cachename
-	
+
 	def updateMovie(self, imageFile):
-		"""Update the image file as video frame in the GUI."""
+		# img = ImageTk.PhotoImage(Image.open(r'E:/CN-ASSIGNMENT-1/catFish.jpg'))
 		photo = ImageTk.PhotoImage(Image.open(imageFile))
-		self.label.configure(image = photo, height=288) 
+		self.label.configure(image=photo, width= 640, height=287, bg = "pink")
 		self.label.image = photo
-		
+    
 	def connectToServer(self):
 		"""Connect to the Server. Start a new RTSP/TCP session."""
 		self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -303,7 +333,9 @@ class Client:
 	def handler(self):
 		"""Handler on explicitly closing the GUI window."""
 		self.pauseMovie()
-		if messagebox.askokcancel("Quit?", "Are you sure you want to quit?"):
+		if messagebox.askokcancel("Bạn muốn thoát ư?", "Hic, Tam bietttt", icon = "warning") :
+			# messagebox.showinfo("Thông báo", "Bạn đã chọn OK.")
 			self.exitClient()
 		else: # When the user presses cancel, resume playing.
 			self.playMovie()
+			
