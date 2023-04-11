@@ -10,6 +10,7 @@ from RtpPacket import RtpPacket
 
 from tkinter import messagebox, PhotoImage
 
+
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
 
@@ -115,7 +116,8 @@ class Client:
 	#Khi ấn play thì sẽ gửi 1 RTSP tới server, đồng thời tạo 1 luồng mới để nghe các gói RTP gửi tới
 	def playMovie(self):
 		"""Play button handler."""
-		if self.state == self.READY:
+		self.sendRtspRequest(self.SETUP)
+		if self.state == self.INIT or self.state == self.READY:
 			# Create a new thread to listen for RTP packets
 			threading.Thread(target=self.listenRtp).start()
 			self.playEvent = threading.Event()
