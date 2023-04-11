@@ -1,8 +1,13 @@
+import os
+
 class VideoStream:
 	def __init__(self, filename):
 		self.filename = filename
 		try:
-			self.file = open(filename, 'rb')
+			path = './videos/' + filename
+			repath = os.path.join(os.path.dirname(__file__), path)
+			self.file = open(repath, 'rb')
+			# self.file = open(filename, 'rb')
 		except:
 			raise IOError
 		self.frameNum = 0
@@ -22,4 +27,8 @@ class VideoStream:
 		"""Get frame number."""
 		return self.frameNum
 	
-	
+	@staticmethod
+	def getVideosList():
+		path = './videos/'
+		return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+		

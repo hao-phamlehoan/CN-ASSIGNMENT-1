@@ -9,10 +9,14 @@ class ServerWorker:
 	PLAY = 'PLAY'
 	PAUSE = 'PAUSE'
 	TEARDOWN = 'TEARDOWN'
+
+	LOAD = 'LOAD'
+
 	
 	INIT = 0
-	READY = 1
-	PLAYING = 2
+	SWITCH = 1
+	READY = 2
+	PLAYING = 3
 	state = INIT
 
 	OK_200 = 0
@@ -48,22 +52,29 @@ class ServerWorker:
 		
 		# Get the RTSP sequence number 
 		seq = request[1].split(' ')
-		
-		# Process SETUP request
-		if requestType == self.SETUP:
+
+		#Process LOAD request
+		if requestType == self.LOAD:
 			if self.state == self.INIT:
+				self.clientInfo['session'] = randint(100000, 999999)
+				print("processing LOAD\n")
+				self.state = self.SWITCH
+				self.replyLoad(self.OK_200, seq[1])
+
+		# Process SETUP request
+		elif requestType == self.SETUP:
+			if self.state == self.SWITCH or self.state == self.PLAYING or self.state == self.READY:
 				# Update state
 				print("processing SETUP\n")
 				
+				if self.state == self.PLAYING:
+					self.clientInfo['event'].set()
 				try:
 					self.clientInfo['videoStream'] = VideoStream(filename)
 					self.state = self.READY
 				except IOError:
 					self.replyRtsp(self.FILE_NOT_FOUND_404, seq[1])
-				
-				# Generate a randomized RTSP session ID
-				self.clientInfo['session'] = randint(100000, 999999)
-				
+
 				# Send RTSP reply
 				self.replyRtsp(self.OK_200, seq[1])
 				
@@ -99,8 +110,8 @@ class ServerWorker:
 		# Process TEARDOWN request
 		elif requestType == self.TEARDOWN:
 			print("processing TEARDOWN\n")
-
-			self.clientInfo['event'].set()
+			if self.state == self.PLAYING:
+				self.clientInfo['event'].set()
 			
 			self.replyRtsp(self.OK_200, seq[1])
 			
@@ -115,7 +126,6 @@ class ServerWorker:
 			# Stop sending if request is PAUSE or TEARDOWN
 			if self.clientInfo['event'].isSet(): 
 				break 
-				
 			data = self.clientInfo['videoStream'].nextFrame()
 			if data: 
 				frameNumber = self.clientInfo['videoStream'].frameNbr()
@@ -128,6 +138,9 @@ class ServerWorker:
 					#print('-'*60)
 					#traceback.print_exc(file=sys.stdout)
 					#print('-'*60)
+			else:
+				self.clientInfo['event'].set()
+				break
 
 	def makeRtp(self, payload, frameNbr):
 		"""RTP-packetize the video data."""
@@ -153,6 +166,18 @@ class ServerWorker:
 			reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
 			connSocket = self.clientInfo['rtspSocket'][0]
 			connSocket.send(reply.encode())
+		# Error messages
+		elif code == self.FILE_NOT_FOUND_404:
+			print("404 NOT FOUND")
+		elif code == self.CON_ERR_500:
+			print("500 CONNECTION ERROR")
+	
+	def replyLoad(self, code, seq):
+		if code == self.OK_200:
+			#print("200 OK")
+			videos = ','.join(VideoStream.getVideosList())
+			reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session']) + '\nVideos: ' + videos
+			self.clientInfo['rtspSocket'][0].send(reply.encode())
 		
 		# Error messages
 		elif code == self.FILE_NOT_FOUND_404:

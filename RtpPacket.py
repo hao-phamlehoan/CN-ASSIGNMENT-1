@@ -19,9 +19,6 @@ class RtpPacket:
 		
 		# header[0] = ...
 		# ...
-		
-		# Get the payload from the argument
-		# self.payload = ...
 
 		header[0] = 0x00
 		header[0] |= (version & 0b11) << 6
@@ -41,20 +38,10 @@ class RtpPacket:
 		header[6] |= (timestamp >> 8) & 0xFF
 		header[7] |= (timestamp     ) & 0xFF
 
-		# header[4] |= (timestamp & 0xFFFFFFFF) >> (32 - 8 * 1)
-		# header[5] |= (timestamp & 0x00FFFFFF) >> (32 - 8 * 2)
-		# header[6] |= (timestamp & 0x0000FFFF) >> (32 - 8 * 3)
-		# header[7] |= (timestamp & 0x000000FF) >> (32 - 8 * 4)
-
 		header[8]  |= (ssrc >> 24) & 0xFF
 		header[9]  |= (ssrc >> 16) & 0xFF
 		header[10] |= (ssrc >>  8) & 0xFF
 		header[11] |= (ssrc      ) & 0xFF
-
-		# header[8]  |= (ssrc & 0xFFFFFFFF) >> (32 - 8 * 1)
-		# header[9]  |= (ssrc & 0x00FFFFFF) >> (32 - 8 * 2)
-		# header[10] |= (ssrc & 0x0000FFFF) >> (32 - 8 * 3)
-		# header[11] |= (ssrc & 0x000000FF) >> (32 - 8 * 4)
 
 		self.header = header
 
