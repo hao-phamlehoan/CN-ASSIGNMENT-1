@@ -12,6 +12,7 @@ from tkinter import messagebox, PhotoImage
 
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
+DEFAULT_THUMBNAIL = "catFish.jpg"
 
 class Client:
 
@@ -50,7 +51,8 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
-  		
+		self.updateMovie(DEFAULT_THUMBNAIL)
+  	
 
 	####################################################
 	#Hàm này dùng để tạo giao diện bao gồm các nút
@@ -72,7 +74,7 @@ class Client:
 		self.start = Button(self.master, width=20, padx=10, pady=10, bg='green', fg='white')
 		self.start["text"] = "Play"
 		self.start["command"] = self.playMovie
-		self.start.grid(row=1, column=1, padx=5, pady=5, sticky="S")
+		self.start.grid(row=1, column=1, padx=5, pady=5, sticky="SE")
 		
 		# Tạo cái nút Pause ấy		
 		self.pause = Button(self.master, width=20, padx=10, pady=10, bg='blue', fg='white')
@@ -307,6 +309,7 @@ class Client:
 						
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1 
+						#self.updateMovie(DEFAULT_THUMBNAIL)
 	
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
