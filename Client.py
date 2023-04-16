@@ -5,10 +5,14 @@ import socket, threading, sys, traceback, os
 import time
 import functools
 
+from tkinter import ttk
+
 from RtpPacket import RtpPacket
 
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
+DEFAULT_IMG = "./hihi.jpg"
+
 
 class Client:
 	INIT = 0
@@ -54,73 +58,73 @@ class Client:
 		self.reset = False
 		self.speed =20
 		self.loadMovies()
-		
+		self.updateMovie(DEFAULT_IMG)	
+		self.master.geometry("535x550")
+  
 	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
+	def create_gradient(start_color, end_color, width, height):
+		gradient = ttk.Frame(width=width, height=height, style="GradientFrame.TFrame")
+		gradient.place(x=0, y=0)
+
+		gradient.tk.call(
+			"ttk::style", "configure", "GradientFrame.TFrame",
+			background=f"linear-gradient(to right, {start_color}, {end_color})"
+		)
+    
 	def createWidgets(self):
 		"""Build GUI."""
 		# Create Text
 		self.ann = Text(self.master, width=40, padx=3, pady=3, height=10)
 		self.ann.grid(row=4, columnspan=2)
-
 		# Create Description
 		self.des = Text(self.master, width=40, padx=3, pady=3, height=10)
 		self.des.grid(row=4, columnspan=2, column=2)
-		
-		# Create Play button		
-		self.start = Button(self.master, width=20, padx=3, pady=3)
-		self.start["text"] = "Play"
-		self.start["command"] = self.playMovie
-		self.start.grid(row=2, column=0, padx=0, pady=0)
-		
-		# Create Pause button			
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
-		self.pause["text"] = "Pause"
-		self.pause["command"] = self.pauseMovie
-		self.pause.grid(row=3, column=0, padx=0, pady=0)
-		
+		# Create Play button
+		self.start = Button(self.master, width=10, padx=5, pady=5, text="Play", command=self.playMovie, bg="#a6dcef")
+		self.start.grid(row=2, column=0, padx=5, pady=5)
+		# Create Pause button
+		self.pause = Button(self.master, width=10, padx=5, pady=5, text="Pause", command=self.pauseMovie, bg="#ffd966")
+		self.pause.grid(row=3, column=0, padx=5, pady=5)
 		# Create Faster button
-		self.setup = Button(self.master, width=20, padx=3, pady=3)
-		self.setup["text"] = "Faster"
-		self.setup["command"] = self.fasterMovie
-		self.setup.grid(row=2, column=1, padx=2, pady=2)
-
+		self.setup = Button(self.master, width=10, padx=5, pady=5, text="Faster", command=self.fasterMovie, bg="#d7bde2")
+		self.setup.grid(row=2, column=1, padx=5, pady=5)
 		# Create Lower button
-		self.setup = Button(self.master, width=20, padx=3, pady=3)
-		self.setup["text"] = "Lower"
-		self.setup["command"] = self.lowerMovie
-		self.setup.grid(row=3, column=1, padx=2, pady=2)
-
-		# Create Foward button
-		self.teardown = Button(self.master, width=20, padx=3, pady=3)
-		self.teardown["text"] = "Forward"
-		self.teardown["command"] =  self.forwardMovie
-		self.teardown.grid(row=2, column=2, padx=2, pady=2)
-
+		self.setup = Button(self.master, width=10, padx=5, pady=5, text="Lower", command=self.lowerMovie, bg="#f5b7b1")
+		self.setup.grid(row=3, column=1, padx=5, pady=5)
+		# Create Forward button
+		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Forward", command=self.forwardMovie, bg="#aed6f1")
+		self.teardown.grid(row=2, column=2, padx=5, pady=5)
 		# Create Back button
-		self.describe = Button(self.master, width=20, padx=3, pady=3)
-		self.describe["text"] = "Back"
-		self.describe["command"] = self.backMovie
-		self.describe.grid(row=3, column=2, padx=2, pady=2)
-
+		self.describe = Button(self.master, width=10, padx=5, pady=5, text="Back", command=self.backMovie, bg="#f9e79f")
+		self.describe.grid(row=3, column=2, padx=5, pady=5)
 		# Create Teardown button
-		self.teardown = Button(self.master, width=20, padx=3, pady=3)
-		self.teardown["text"] = "Teardown"
-		self.teardown["command"] =  self.exitClient
-		self.teardown.grid(row=2, column=3, padx=2, pady=2)
-
+		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Teardown", command=self.exitClient, bg="#f5cba7")
+		self.teardown.grid(row=2, column=3, padx=5, pady=5)
 		# Describe
-		self.describe = Button(self.master, width=20, padx=3, pady=3)
-		self.describe["text"] = "Describe"
-		self.describe["command"] = self.describeMovie
-		self.describe.grid(row=3, column=3, padx=2, pady=2)
-
+		self.describe = Button(self.master, width=10, padx=5, pady=5, text="Describe", command=self.describeMovie, bg="#d6dbdf")
+		self.describe.grid(row=3, column=3, padx=5, pady=5)
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=6, sticky=W+E+N+S, padx=5, pady=5) 
+		self.label.grid(row=0, column=0, columnspan=6, sticky=W, padx=5, pady=5)
+   
+		self.frameContainer = Frame(self.master, width=200)
+		self.frameContainer.grid(column=5, row=0, rowspan=5, padx=5, pady=5, sticky="nsew")
 
-		self.frameContainer = Frame(self.master, width = 200)
-		self.frameContainer.grid(column=4, row= 1, rowspan = 4)
+		    # Configure rows
+		self.master.grid_rowconfigure(0, weight=1)
+		self.master.grid_rowconfigure(1, weight=1)
+		self.master.grid_rowconfigure(2, weight=1)
+		self.master.grid_rowconfigure(3, weight=1)
+		self.master.grid_rowconfigure(4, weight=1)
 
+		# Configure columns
+		self.master.grid_columnconfigure(0, weight=3)
+		self.master.grid_columnconfigure(1, weight=3)
+		self.master.grid_columnconfigure(2, weight=3)
+		self.master.grid_columnconfigure(3, weight=3)
+		self.master.grid_columnconfigure(4, weight=3)
+		self.master.grid_columnconfigure(5, weight=1)
+  
 	def loadMovies(self):
 		"""Setup button handler."""
 		if self.state == self.INIT:
@@ -246,10 +250,10 @@ class Client:
 		self.label.image = photo # update screen
 		self.ann.delete("1.0", END)
 
-		self.ann.insert(INSERT, "Video data recieved: "+str(self.totalData))
-		self.ann.insert(INSERT, "\nRTP packet loss rate: " + str(0 if self.frameNbr == 0 else self.loss/(self.totalFrame + self.loss)))
-		self.ann.insert(INSERT, "\nVideo data rate: " + str(0 if self.timePeriod == 0 else self.totalData/self.timePeriod))
-		self.ann.insert(INSERT, "\nFPS: " + str(0 if self.timePeriod == 0 else self.speed))	
+		self.ann.insert(INSERT, "Video data recieved: \n"+str(self.totalData))
+		self.ann.insert(INSERT, "\nRTP packet loss rate: \n" + str(0 if self.frameNbr == 0 else self.loss/(self.totalFrame + self.loss)))
+		self.ann.insert(INSERT, "\nVideo data rate: \n" + str(0 if self.timePeriod == 0 else self.totalData/self.timePeriod))
+		self.ann.insert(INSERT, "\nFPS: \n" + str(0 if self.timePeriod == 0 else self.speed))	
 		# self.setTime()
 		
 	def connectToServer(self):
@@ -310,10 +314,10 @@ class Client:
 		elif requestCode == self.FASTER :
 			#Update speed
 			self.speed *=2
-        
+		
 			# Update RTSP sequence number.
 			self.rtspSeq+=1
-        
+		
 			# Write the RTSP request to be sent.
 			msg = 'FASTER ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
 			
@@ -326,7 +330,7 @@ class Client:
 
 			# Update RTSP sequence number.
 			self.rtspSeq+=1
-        
+		
 			# Write the RTSP request to be sent.
 			msg = 'LOWER ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
 
@@ -349,7 +353,7 @@ class Client:
 		elif requestCode == self.BACK :
 			# Update RTSP sequence number.
 			self.rtspSeq+=1
-        
+		
 			# # Update frame
 			self.frameNbr -=30
 			if self.frameNbr < 0:
@@ -459,7 +463,29 @@ class Client:
 		def func(name):
 			self.fileName = name
 			self.reset = True
-			self.des.insert(INSERT, "Switch to file " + name + '\n\n')
-		for item in self.videos:
-			button = Button(self.frameContainer, text=item, width=20, padx=2, pady=2, command=functools.partial(func,item))
+			self.des.insert(INSERT, "Switch to file \n" + name + '\n\n')
+
+		for idx, item in enumerate(self.videos):
+			button = Button(self.frameContainer, text=item, width=15, padx=5, pady=5, command=functools.partial(func,item))
+			
+			# Set different background colors for each button
+			if idx == 0:
+				button.configure(background='#F9A602', foreground='white')
+			elif idx == 1:
+				button.configure(background='#40C9A2', foreground='white')
+			elif idx == 2:
+				button.configure(background='#FF5733', foreground='white')
+			elif idx == 3:
+				button.configure(background='#FFC300', foreground='white')
+			elif idx == 4:
+				button.configure(background='#900C3F', foreground='white')
+			elif idx == 5:
+				button.configure(background='#58B19F', foreground='white')
+			elif idx == 6:
+				button.configure(background='#FFC107', foreground='white')
+			elif idx == 7:
+				button.configure(background='#138D75', foreground='white')
+			
+			# Set the same font and relief for all buttons
+			button.configure(font=('Helvetica', 10), relief='raised', borderwidth=3)
 			button.pack(side=TOP)
