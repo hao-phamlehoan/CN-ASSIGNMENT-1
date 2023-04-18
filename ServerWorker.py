@@ -228,17 +228,21 @@ class ServerWorker:
 			print("500 CONNECTION ERROR")
 
 	def replyDes(self, code, seq, filename):
-		body  = "\n\nv=0"
-		body += "\nm=video " + str(self.clientInfo['rtpPort']) + " RTP/AVP " + "26" 
-		body += "\na=control:streamid=" + str(self.clientInfo["session"])
-		body += "\na=\mimetype:string;\"video/MJPEG\""
+    		# body  = "\n\nv=0"
+		# body += "\nm=video " + str(self.clientInfo['rtpPort']) + " RTP/AVP " + "26" 
+		# body += "\na=control:streamid=" + str(self.clientInfo["session"])
+		# body += "\na=\mimetype:string;\"video/MJPEG\""
+		numFrame = self.clientInfo['videoStream'].getNumberFrame()
+		total_seconds = numFrame / 20
+		minutes = total_seconds // 60
+		seconds = total_seconds % 60
+		time_str = "{:02d}:{:02d}".format(int(minutes), int(seconds))
 		if code == self.OK_200:
 			reply  = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
-			reply += '\nContent−Base: ' + filename
-			reply += '\nContent−Type: application/sdp'
-			reply += '\nContent−Length: ' + str(len(body)) + body
-
-			
+			reply += '\nName of video: \n' + filename
+			reply += '\nTotal time: ' + time_str
+			reply += '\nTotal frame: ' + str(numFrame)
+			# reply += '\nContent−Length: ' + str(len(body)) + body
 			self.clientInfo["rtspSocket"][0].send(reply.encode())
 		elif code == self.FILE_NOT_FOUND_404:
 			print("404 NOT FOUND")

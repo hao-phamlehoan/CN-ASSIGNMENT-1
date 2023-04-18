@@ -15,7 +15,7 @@ import tkinter as tk
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
 DEFAULT_IMG = "./hihi.jpg"
-
+IMG = ".catFish.jpg"
 
 class Client:
 	INIT = 0
@@ -66,16 +66,8 @@ class Client:
 		self.master.geometry("535x650")
 		self.tempFrameNum = -1
   
-	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
-	def create_gradient(start_color, end_color, width, height):
-		gradient = ttk.Frame(width=width, height=height, style="GradientFrame.TFrame")
-		gradient.place(x=0, y=0)
-
-		gradient.tk.call(
-			"ttk::style", "configure", "GradientFrame.TFrame",
-			background=f"linear-gradient(to right, {start_color}, {end_color})"
-		)
   
+	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
   
 	def createWidgets(self):
 		"""Build GUI."""
@@ -99,37 +91,43 @@ class Client:
 		self.scale.grid(row=2, column=1, sticky="WE", pady=0, columnspan=2)
 		
 		# Create Play button
-		self.start = Button(self.master, width=10, padx=5, pady=5, text="Play", command=self.playMovie, bg="#a6dcef")
+		self.start = Button(self.master, width=10, padx=5, pady=5, text="▶", command=self.playMovie, bg="#a6dcef")
 		self.start.grid(row=3, column=0, padx=5, pady=5)
 		# Create Pause button
-		self.pause = Button(self.master, width=10, padx=5, pady=5, text="Pause", command=self.pauseMovie, bg="#ffd966")
-		self.pause.grid(row=4, column=0, padx=5, pady=5)
+		self.pause = Button(self.master, width=10, padx=5, pady=5, text="❚❚", command=self.pauseMovie, bg="#ffd966")
+		self.pause.grid(row=3, column=1, padx=5, pady=5)
 		# Create Faster button
-		self.setup = Button(self.master, width=10, padx=5, pady=5, text="Faster", command=self.fasterMovie, bg="#d7bde2")
-		self.setup.grid(row=3, column=1, padx=5, pady=5)
-		# Create Lower button
-		self.setup = Button(self.master, width=10, padx=5, pady=5, text="Lower", command=self.lowerMovie, bg="#f5b7b1")
+		self.setup = Button(self.master, width=10, padx=5, pady=5, text="⏩", command=self.fasterMovie, bg="#d7bde2")
 		self.setup.grid(row=4, column=1, padx=5, pady=5)
+		# Create Lower button
+		self.setup = Button(self.master, width=10, padx=5, pady=5, text="⏪", command=self.lowerMovie, bg="#f5b7b1")
+		self.setup.grid(row=4, column=0, padx=5, pady=5)
 		# Create Forward button
-		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Forward", command=self.forwardMovie, bg="#aed6f1")
+		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="▶▶", command=self.forwardMovie, bg="#aed6f1")
 		self.teardown.grid(row=3, column=2, padx=5, pady=5)
 		# Create Back button
-		self.describe = Button(self.master, width=10, padx=5, pady=5, text="Back", command=self.backMovie, bg="#f9e79f")
-		self.describe.grid(row=4, column=2, padx=5, pady=5)
+		self.describe = Button(self.master, width=10, padx=5, pady=5, text="◀◀", command=self.backMovie, bg="#f9e79f")
+		self.describe.grid(row=3, column=3, padx=5, pady=5)
 		# Create Teardown button
-		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Teardown", command=self.exitClient, bg="#f5cba7")
-		self.teardown.grid(row=3, column=3, padx=5, pady=5)
+		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="⏹", command=self.exitClient, bg="#f5cba7")
+		self.teardown.grid(row=4, column=2, padx=5, pady=5)
 		# Describe
-		self.describe = Button(self.master, width=10, padx=5, pady=5, text= "Describe", command=self.describeMovie, bg="#d6dbdf")
+		img = Image.open(r'./catFish.jpg')
+		img = img.resize((20, 20)) # resize ảnh về kích thước phù hợp
+		self.photo = ImageTk.PhotoImage(img)
+
+		# Tạo button với ảnh làm background
+		self.describe = Button(self.master, width=83, padx=5, pady=5, image=self.photo, command=self.describeMovie ,bg="#d6dbdf", height= 28)
 		self.describe.grid(row=4, column=3, padx=5, pady=5)
+
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=6, sticky=W, padx=5, pady=5)
+		self.label.grid(row=0, column=0, columnspan=6, sticky="w", padx=5, pady=5)
    
 		self.frameContainer = Frame(self.master, width=200)
 		self.frameContainer.grid(column=5, row=0, rowspan=5, padx=5, pady=5, sticky="nsew")
 
-		    # Configure rows
+		# Configure rows
 		self.master.grid_rowconfigure(0, weight=1)
 		self.master.grid_rowconfigure(1, weight=1)
 		self.master.grid_rowconfigure(2, weight=1)
