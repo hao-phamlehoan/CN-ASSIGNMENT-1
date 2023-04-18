@@ -2,6 +2,9 @@ import sys
 from tkinter import Tk
 from Client import Client
 
+import tkinter as tk
+import tkinterweb as tkweb
+
 if __name__ == "__main__":
 	try:
 		serverAddr = sys.argv[1]

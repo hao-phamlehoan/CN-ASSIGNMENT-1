@@ -10,6 +10,8 @@ from tkinter import ttk
 
 from RtpPacket import RtpPacket
 
+import tkinter as tk
+
 CACHE_FILE_NAME = "cache-"
 CACHE_FILE_EXT = ".jpg"
 DEFAULT_IMG = "./hihi.jpg"
@@ -57,10 +59,12 @@ class Client:
 		self.totalFrame = 0
 		self.videos = []
 		self.reset = False
+		self.boolean = False
 		self.speed =20
 		self.loadMovies()
 		self.updateMovie(DEFAULT_IMG)	
-		self.master.geometry("535x550")
+		self.master.geometry("535x650")
+		self.tempFrameNum = -1
   
 	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
 	def create_gradient(start_color, end_color, width, height):
@@ -71,39 +75,53 @@ class Client:
 			"ttk::style", "configure", "GradientFrame.TFrame",
 			background=f"linear-gradient(to right, {start_color}, {end_color})"
 		)
-    
+  
+  
 	def createWidgets(self):
 		"""Build GUI."""
 		# Create Text
 		self.ann = Text(self.master, width=40, padx=3, pady=3, height=10)
-		self.ann.grid(row=4, columnspan=2)
+		self.ann.grid(row=5, columnspan=2)
 		# Create Description
-		self.des = Text(self.master, width=40, padx=3, pady=3, height=10)
-		self.des.grid(row=4, columnspan=2, column=2)
+		self.des = Text(self.master,width=40, padx=3, pady=3, height=10)
+		self.des.grid(row=5, columnspan=2, column=2)
+		# timestart 
+		self.aaa = Label(self.master, width=4,height=1, padx=3, pady=3, text="00:00", bg="#a6dcef")
+		self.aaa.grid(row=2, column=0)
+		# timeend 
+		self.bbb = Label(self.master, width=4,height=1, padx=3, pady=3, text="00:00", bg="#a6dcef")
+		self.bbb.grid(row=2, column=3)
+		# sroll
+		
+		# self.scale = Scale(self.master, from_=0, to=1, resolution=0.001, orient=HORIZONTAL, command= lambda event: self.rewindMovie(self.scale.get()))
+		# self.scale.grid(row=2, column=1, sticky="WE", pady=0, columnspan=2)
+		self.scale = Scale(self.master, from_=0, to=1, resolution=0.001, orient=HORIZONTAL,showvalue=0, command= lambda event: self.rewindMovie(self.scale.get()))
+		self.scale.grid(row=2, column=1, sticky="WE", pady=0, columnspan=2)
+		
 		# Create Play button
 		self.start = Button(self.master, width=10, padx=5, pady=5, text="Play", command=self.playMovie, bg="#a6dcef")
-		self.start.grid(row=2, column=0, padx=5, pady=5)
+		self.start.grid(row=3, column=0, padx=5, pady=5)
 		# Create Pause button
 		self.pause = Button(self.master, width=10, padx=5, pady=5, text="Pause", command=self.pauseMovie, bg="#ffd966")
-		self.pause.grid(row=3, column=0, padx=5, pady=5)
+		self.pause.grid(row=4, column=0, padx=5, pady=5)
 		# Create Faster button
 		self.setup = Button(self.master, width=10, padx=5, pady=5, text="Faster", command=self.fasterMovie, bg="#d7bde2")
-		self.setup.grid(row=2, column=1, padx=5, pady=5)
+		self.setup.grid(row=3, column=1, padx=5, pady=5)
 		# Create Lower button
 		self.setup = Button(self.master, width=10, padx=5, pady=5, text="Lower", command=self.lowerMovie, bg="#f5b7b1")
-		self.setup.grid(row=3, column=1, padx=5, pady=5)
+		self.setup.grid(row=4, column=1, padx=5, pady=5)
 		# Create Forward button
 		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Forward", command=self.forwardMovie, bg="#aed6f1")
-		self.teardown.grid(row=2, column=2, padx=5, pady=5)
+		self.teardown.grid(row=3, column=2, padx=5, pady=5)
 		# Create Back button
 		self.describe = Button(self.master, width=10, padx=5, pady=5, text="Back", command=self.backMovie, bg="#f9e79f")
-		self.describe.grid(row=3, column=2, padx=5, pady=5)
+		self.describe.grid(row=4, column=2, padx=5, pady=5)
 		# Create Teardown button
 		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Teardown", command=self.exitClient, bg="#f5cba7")
-		self.teardown.grid(row=2, column=3, padx=5, pady=5)
+		self.teardown.grid(row=3, column=3, padx=5, pady=5)
 		# Describe
 		self.describe = Button(self.master, width=10, padx=5, pady=5, text= "Describe", command=self.describeMovie, bg="#d6dbdf")
-		self.describe.grid(row=3, column=3, padx=5, pady=5)
+		self.describe.grid(row=4, column=3, padx=5, pady=5)
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
 		self.label.grid(row=0, column=0, columnspan=6, sticky=W, padx=5, pady=5)
@@ -117,6 +135,7 @@ class Client:
 		self.master.grid_rowconfigure(2, weight=1)
 		self.master.grid_rowconfigure(3, weight=1)
 		self.master.grid_rowconfigure(4, weight=1)
+		self.master.grid_rowconfigure(5, weight=1)
 
 		# Configure columns
 		self.master.grid_columnconfigure(0, weight=3)
@@ -131,6 +150,18 @@ class Client:
 		if self.state == self.INIT:
 			self.sendRtspRequest(self.LOAD)
 
+	def rewindMovie(self, rate: float):
+		if rate > 1:
+			rate = 1
+		if rate < 0:
+			rate = 0
+		if (self.state == self.PLAYING or self.state == self.READY) and self.secPerFrame != 0:
+			frameNumber = int(rate * self.maxFrame)
+		self.tempFrameNum = frameNumber
+		# số khung hình hiện tại, ko thay đổi frameNbr
+		# số khung hình hiện tại trong thanh kéo, có thay đổi tempFrameNum
+		self.sendRtspRequest(self.REWIND)
+
 	def setupMovie(self):
 		"""Setup button handler."""
 		self.reset = False
@@ -139,14 +170,19 @@ class Client:
 	
 	def exitClient(self):
 		"""Teardown button handler."""
-		self.sendRtspRequest(self.TEARDOWN)
+		
 		# Close the gui window
-		self.master.destroy() 
+		if self.boolean:
+			self.sendRtspRequest(self.TEARDOWN)
+			self.master.destroy() 
+		else:
+			self.reset = True	
 		# Delete the cache image from video
 		try:
 			os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
 		except:
-			print("No such cache file to delete")
+			if self.boolean == True:
+				print("No such cache file to delete")
 
 	def pauseMovie(self):
 		"""Pause button handler."""
@@ -181,7 +217,6 @@ class Client:
 			self.frameNbr = 0
 			self.reset = False
 			self.sendRtspRequest(self.SETUP)
-			# messagebox.showinfo("Thông báo", "Bạn chưa chọn video cần phát.")
 		elif self.state == self.READY:
 			self.startRecv = time.time()
 			# Create a new thread to connect to server and listen to the change on server
@@ -219,6 +254,15 @@ class Client:
 						self.startRecv = time.time()
 
 						self.frameNbr = seqNum
+						x = self.frameNbr / self.maxFrame
+						self.scale.set(x)
+						total_seconds = self.frameNbr / 20
+						minutes = total_seconds // 60
+						seconds = total_seconds % 60
+						time_str = "{:02d}:{:02d}".format(int(minutes), int(seconds))
+
+						self.aaa.config(text = time_str)
+						
 						if self.teardownAcked != 1:
 							self.updateMovie(self.writeFrame(rtpData.getPayload())) # send cache name to update movie to change content
 						else:
@@ -253,7 +297,7 @@ class Client:
 		self.label.configure(image = photo, height=288) 
 		self.label.image = photo # update screen
 		self.ann.delete("1.0", END)
-
+		#self.ann.insert(INSERT, "TotalFrames: ", + str(self.getN))
 		self.ann.insert(INSERT, "Video data recieved: \n"+str(self.totalData))
 		self.ann.insert(INSERT, "\nRTP packet loss rate: \n" + str(0 if self.frameNbr == 0 else self.loss/(self.totalFrame + self.loss)))
 		self.ann.insert(INSERT, "\nVideo data rate: \n" + str(0 if self.timePeriod == 0 else self.totalData/self.timePeriod))
@@ -368,12 +412,16 @@ class Client:
 			
 			# Keep track of the sent request.
 			self.requestSent = self.BACK
+		elif requestCode == self.REWIND and self.tempFrameNum != -1 and self.tempFrameNum != self.frameNbr:
+			self.rtspSeq += 1
+			msg = 'REWIND ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq)+ '\nSession: ' + str(self.sessionId) + '\nFrame: ' + str(self.tempFrameNum)
+			self.requestSent = self.REWIND
 		else:
 			return
 		
 		# Send request to server using rtspSocket
 		self.rtspSocket.sendall(bytes(msg, 'utf8'))
-		
+
 	def recvRtspReply(self):
 		"""Receive RTSP reply from the server."""
 		while True:
@@ -413,6 +461,11 @@ class Client:
 
 					elif self.requestSent == self.SETUP:
 						self.maxFrame = int(lines[3].decode().split(' ')[1])
+						total_seconds = self.maxFrame / 20
+						minutes = total_seconds // 60
+						seconds = total_seconds % 60
+						time_str = "{:02d}:{:02d}".format(int(minutes), int(seconds))
+						self.bbb.config(text = time_str)
 						self.secPerFrame = float(lines[4].decode().split(' ')[1])
 						# Update RTSP state.
 						self.state = self.READY
@@ -434,6 +487,11 @@ class Client:
 						for i in range(4, len(lines)):
 							temp += '\n' + lines[i].decode()
 						self.des.insert(INSERT, temp + '\n\n')
+					elif self.requestSent == self.REWIND:
+						temp = int(lines[3].decode().split(' ')[1])
+						if self.tempFrameNum == temp:
+							self.tempFrameNum = -1
+							self.frameNbr = temp
 									
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
@@ -459,6 +517,7 @@ class Client:
 		"""Handler on explicitly closing the GUI window."""
 		self.pauseMovie()
 		if tkinter.messagebox.askokcancel("Quit?", "Are you sure you want to quit?"):
+			self.boolean = True
 			self.exitClient()
 		else: # When the user presses cancel, resume playing.
 			self.playMovie()

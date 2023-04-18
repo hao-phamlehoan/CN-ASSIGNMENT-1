@@ -126,7 +126,8 @@ class ServerWorker:
 			self.replyRtsp(self.OK_200, seq[1])
 			
 			# Close the RTP socket
-			self.clientInfo['rtpSocket'].close()
+			if 'rtpSocket' in self.clientInfo:
+				self.clientInfo['rtpSocket'].close()
 
 		# Process DESCRIBE request
 		elif requestType == self.DESCRIBE:
@@ -161,6 +162,13 @@ class ServerWorker:
 			except:
 				print(data)
 			print("processcing BACK\n")
+			self.replyRewind(self.OK_200, seq[1], frameNum)
+		elif requestType == self.REWIND:
+			try: 
+				frameNum = int(request[3].split(' ')[1])
+			except:
+				print(data)
+			print("processcing REWIND\n")
 			self.replyRewind(self.OK_200, seq[1], frameNum)
 		else:
 			print("Wrong format data")
@@ -229,6 +237,7 @@ class ServerWorker:
 			reply += '\nContent−Base: ' + filename
 			reply += '\nContent−Type: application/sdp'
 			reply += '\nContent−Length: ' + str(len(body)) + body
+
 			
 			self.clientInfo["rtspSocket"][0].send(reply.encode())
 		elif code == self.FILE_NOT_FOUND_404:
