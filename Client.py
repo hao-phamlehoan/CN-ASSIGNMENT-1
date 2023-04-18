@@ -4,7 +4,8 @@ from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
 import time
 import functools
-
+from tkinter import messagebox 
+tkinter.messagebox
 from tkinter import ttk
 
 from RtpPacket import RtpPacket
@@ -101,7 +102,7 @@ class Client:
 		self.teardown = Button(self.master, width=10, padx=5, pady=5, text="Teardown", command=self.exitClient, bg="#f5cba7")
 		self.teardown.grid(row=2, column=3, padx=5, pady=5)
 		# Describe
-		self.describe = Button(self.master, width=10, padx=5, pady=5, text="Describe", command=self.describeMovie, bg="#d6dbdf")
+		self.describe = Button(self.master, width=10, padx=5, pady=5, text= "Describe", command=self.describeMovie, bg="#d6dbdf")
 		self.describe.grid(row=3, column=3, padx=5, pady=5)
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
@@ -174,10 +175,13 @@ class Client:
 
 	def playMovie(self):
 		"""Play button handler."""
-		if self.state == self.SWITCH and self.fileName != '' or self.reset:
+		if self.state == self.SWITCH and self.fileName == '':
+			messagebox.showinfo("Thông báo", "Bạn chưa chọn video cần phát.")
+		elif self.state == self.SWITCH and self.fileName != '' or self.reset:
 			self.frameNbr = 0
 			self.reset = False
 			self.sendRtspRequest(self.SETUP)
+			# messagebox.showinfo("Thông báo", "Bạn chưa chọn video cần phát.")
 		elif self.state == self.READY:
 			self.startRecv = time.time()
 			# Create a new thread to connect to server and listen to the change on server
